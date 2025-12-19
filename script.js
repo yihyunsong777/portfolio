@@ -61,11 +61,12 @@ contactForm.addEventListener('submit', (e) => {
     // Get form values
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
     const message = document.getElementById('message').value;
     
     // Basic validation
     if (!name || !email || !message) {
-        alert('모든 필드를 입력해주세요.');
+        alert('이름, 이메일, 메시지는 필수 입력 항목입니다.');
         return;
     }
     
@@ -76,19 +77,75 @@ contactForm.addEventListener('submit', (e) => {
         return;
     }
     
-    // Simulate form submission
+    // Submit button 상태 변경
     const submitButton = contactForm.querySelector('.submit-button');
     const originalText = submitButton.textContent;
     submitButton.textContent = '전송 중...';
     submitButton.disabled = true;
     
-    // Simulate API call
-    setTimeout(() => {
-        alert('메시지가 성공적으로 전송되었습니다!');
+   
+    // 또는 Discord 웹훅 사용 시
+    const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1451581502688329808/HqBnlRLSMm825guwymvHEzz6LvZum4JfUt-lFSb06HnfEgXUm6iK3vDEAo4BtoJh8cEN'; // Discord 웹훅 URL
+    
+    // 메시지 포맷팅
+    const notificationMessage = `
+📧 새로운 포트폴리오 문의가 도착했습니다!
+
+👤 이름: ${name}
+📮 이메일: ${email}
+${phone ? `📱 전화번호: ${phone}` : ''}
+
+💬 메시지:
+${message}
+
+---
+포트폴리오 웹사이트에서 전송됨
+    `.trim();
+    
+  
+    if (DISCORD_WEBHOOK_URL !== 'YOUR_DISCORD_WEBHOOK_URL') {
+        sendToDiscord();
+    }
+    else {
+        // 설정이 안 되어 있는 경우
+        alert('⚠️ 알림 설정이 완료되지 않았습니다.\n\n설정 가이드를 참고하여 텔레그램 봇 또는 Discord 웹훅을 설정해주세요.\n\n(현재는 테스트 모드입니다)');
+        console.log('전송될 메시지:', notificationMessage);
         contactForm.reset();
+    }
+    
+    function sendToDiscord() {
+        fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                content: notificationMessage
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('메시지가 성공적으로 전송되었습니다! 빠른 시일 내에 답변드리겠습니다.');
+                contactForm.reset();
+            } else {
+                throw new Error('Discord 전송 실패');
+            }
+        })
+        .catch((error) => {
+            console.error('Discord 전송 실패:', error);
+            alert('메시지 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        })
+        .finally(() => {
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+        });
+    }
+    
+    // 최종적으로 버튼 상태 복구 (텔레그램 성공 시)
+    if (TELEGRAM_BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN' || TELEGRAM_CHAT_ID === 'YOUR_TELEGRAM_CHAT_ID') {
         submitButton.textContent = originalText;
         submitButton.disabled = false;
-    }, 1500);
+    }
 });
 
 // Intersection Observer for fade-in animations
